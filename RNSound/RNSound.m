@@ -9,34 +9,6 @@
 
 @synthesize _key = _key;
 
-- (void)audioSessionChangeObserver:(NSNotification *)notification {
-    NSDictionary *userInfo = notification.userInfo;
-    AVAudioSessionRouteChangeReason audioSessionRouteChangeReason =
-        [userInfo[@"AVAudioSessionRouteChangeReasonKey"] longValue];
-    AVAudioSessionInterruptionType audioSessionInterruptionType =
-        [userInfo[@"AVAudioSessionInterruptionTypeKey"] longValue];
-    AVAudioPlayer *player = [self playerForKey:self._key];
-    if (audioSessionInterruptionType == AVAudioSessionInterruptionTypeEnded) {
-        if (player) {
-            [player play];
-            [self setOnPlay:YES forPlayerKey:self._key];
-        }
-    }
-    else if (audioSessionRouteChangeReason ==
-        AVAudioSessionRouteChangeReasonOldDeviceUnavailable) {
-        if (player) {
-            [player pause];
-            [self setOnPlay:NO forPlayerKey:self._key];
-        }
-    }
-    else if (audioSessionInterruptionType == AVAudioSessionInterruptionTypeBegan) {
-        if (player) {
-            [player pause];
-            [self setOnPlay:NO forPlayerKey:self._key];
-        }
-    }
-}
-
 - (NSMutableDictionary *)playerPool {
     if (!_playerPool) {
         _playerPool = [NSMutableDictionary new];
@@ -237,16 +209,6 @@ RCT_EXPORT_METHOD(play
                   : (nonnull NSNumber *)key withCallback
                   : (RCTResponseSenderBlock)callback) {
     [[AVAudioSession sharedInstance] setActive:YES error:nil];
-    [[NSNotificationCenter defaultCenter]
-        addObserver:self
-           selector:@selector(audioSessionChangeObserver:)
-               name:AVAudioSessionRouteChangeNotification
-             object:[AVAudioSession sharedInstance]];
-    [[NSNotificationCenter defaultCenter]
-        addObserver:self
-           selector:@selector(audioSessionChangeObserver:)
-               name:AVAudioSessionInterruptionNotification
-             object:[AVAudioSession sharedInstance]];
     self._key = key;
     AVAudioPlayer *player = [self playerForKey:key];
     if (player) {
